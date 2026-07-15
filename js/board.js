@@ -7,11 +7,13 @@ import { openCreateModal, openDetailModal } from './detail.js';
 let suppressClick = false;
 
 export function renderBoard(view) {
+  const boardEl = el('div', { class: 'board' }, columnsSorted().map(col => columnEl(col)));
   view.replaceChildren(
     el('div', { class: 'board-header' },
       el('div', { class: 'board-title' }, `${state.userDoc.projectName} board`)),
-    el('div', { class: 'board' }, columnsSorted().map(col => columnEl(col))),
+    boardEl,
   );
+  initSortables(boardEl);
 }
 
 function columnEl(col) {
@@ -83,4 +85,29 @@ export function issueCard(issue) {
 export function setSuppressClick() {
   suppressClick = true;
   setTimeout(() => { suppressClick = false; }, 0);
+}
+
+export function initSortables(root) {
+  root.querySelectorAll('.column-list').forEach(listEl => {
+    new Sortable(listEl, {
+      group: listEl.dataset.group || 'board',
+      animation: 150,
+      ghostClass: 'ghost',
+      onEnd: handleDrop,
+    });
+  });
+}
+
+async function handleDrop(evt) {
+  setSuppressClick();
+  const lists = evt.from === evt.to ? [evt.to] : [evt.from, evt.to];
+  const updates = [];
+  for (const listEl of lists) {
+    const status = listEl.dataset.status;
+    [...listEl.querySelectorAll('.card')].forEach((cardEl, i) => {
+      updates.push({ id: cardEl.dataset.id, status, order: i });
+    });
+  }
+  try { await store.batchUpdateIssues(updates); }
+  catch (e) { toast('Reorder failed: ' + e.message); }
 }
