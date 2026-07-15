@@ -78,3 +78,22 @@ export async function batchUpdateIssues(updates) {
   }
   await batch.commit();
 }
+
+export async function createEpic(data) {
+  const ref = doc(epicsCol());
+  await setDoc(ref, { ...data, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+  return ref.id;
+}
+
+export async function updateEpic(id, fields) {
+  await updateDoc(epicRef(id), { ...fields, updatedAt: serverTimestamp() });
+}
+
+export async function deleteEpic(id, issueIdsToUnassign) {
+  const batch = writeBatch(db);
+  batch.delete(epicRef(id));
+  for (const iid of issueIdsToUnassign) {
+    batch.update(issueRef(iid), { epicId: null, updatedAt: serverTimestamp() });
+  }
+  await batch.commit();
+}

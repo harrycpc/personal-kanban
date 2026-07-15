@@ -1,7 +1,10 @@
-import { state, columnsSorted, issuesByStatus, findEpic } from './state.js';
-import { el, iconEl, typeIconHtml, priorityIconHtml, toast } from './ui.js';
+import { state, columnsSorted, issuesByStatus, findEpic, rerender } from './state.js';
+import {
+  el, iconEl, typeIconHtml, priorityIconHtml, toast, openModal, confirmDialog,
+} from './ui.js';
 import * as store from './store.js';
 import { openDetailModal } from './detail.js';
+import { EPIC_COLORS } from './logic.js';
 
 let suppressClick = false;
 
@@ -11,7 +14,7 @@ export function renderBacklog(view) {
     el('div', { class: 'board-title' }, 'Backlog'),
     section(first.name, first.id),
     section('Backlog', 'backlog'));
-  view.replaceChildren(el('div', { class: 'backlog-layout' }, main));
+  view.replaceChildren(el('div', { class: 'backlog-layout' }, epicPanel(), main));
   main.querySelectorAll('.backlog-list').forEach(listEl => {
     new Sortable(listEl, { group: 'backlog', animation: 150, onEnd: handleBacklogDrop });
   });
@@ -56,4 +59,79 @@ async function handleBacklogDrop(evt) {
   }
   try { await store.batchUpdateIssues(updates); }
   catch (e) { toast('Reorder failed: ' + e.message); }
+}
+
+function epicPanel() {
+  return el('div', { class: 'epic-panel' },
+    el('h3', {}, 'Epics'),
+    state.epics.map(epic => {
+      const active = state.filters.epicId === epic.id;
+      const row = el('div', { class: 'epic-item' + (active ? ' active' : '') },
+        el('span', { class: 'epic-dot', style: `background:${epic.color}` }),
+        epic.name,
+        el('button', {
+          class: 'icon-btn edit',
+          onclick: e => { e.stopPropagation(); openEpicDialog(epic); },
+        }, '✎'));
+      row.addEventListener('click', () => {
+        state.filters.epicId = active ? '' : epic.id;
+        rerender();
+      });
+      return row;
+    }),
+    el('button', { class: 'col-add', onclick: () => openEpicDialog(null) }, '+ Create epic'));
+}
+
+function openEpicDialog(epic) {
+  let color = epic?.color || EPIC_COLORS[0];
+  const name = el('input', { value: epic?.name || '', placeholder: 'Epic name' });
+  const swatches = el('div', { class: 'epic-swatches' }, EPIC_COLORS.map(c => {
+    const sw = el('button', {
+      class: 'epic-swatch' + (c === color ? ' selected' : ''),
+      style: `background:${c}`,
+      onclick: () => {
+        color = c;
+        swatches.querySelectorAll('.epic-swatch').forEach(s => s.classList.remove('selected'));
+        sw.classList.add('selected');
+      },
+    });
+    return sw;
+  }));
+  const saveBtn = el('button', {
+    class: 'btn btn-primary',
+    onclick: async () => {
+      const n = name.value.trim();
+      if (!n) { toast('Epic name is required'); return; }
+      try {
+        if (epic) await store.updateEpic(epic.id, { name: n, color });
+        else await store.createEpic({ name: n, color });
+        overlay.remove();
+      } catch (e) { toast('Save failed: ' + e.message); }
+    },
+  }, epic ? 'Save' : 'Create');
+  const deleteBtn = epic && el('button', {
+    class: 'btn btn-danger',
+    onclick: async () => {
+      const affected = state.issues.filter(i => i.epicId === epic.id).map(i => i.id);
+      const ok = await confirmDialog({
+        title: `Delete epic "${epic.name}"?`,
+        message: `${affected.length} issue(s) will be unassigned from it (not deleted).`,
+      });
+      if (!ok) return;
+      try {
+        await store.deleteEpic(epic.id, affected);
+        if (state.filters.epicId === epic.id) state.filters.epicId = '';
+        overlay.remove();
+      } catch (e) { toast('Delete failed: ' + e.message); }
+    },
+  }, 'Delete');
+  const overlay = openModal(el('div', { class: 'modal' },
+    el('h2', {}, epic ? 'Edit epic' : 'Create epic'),
+    el('div', { class: 'field' }, el('label', {}, 'Name'), name),
+    el('div', { class: 'field' }, el('label', {}, 'Color'), swatches),
+    el('div', { class: 'actions' },
+      deleteBtn,
+      el('button', { class: 'btn', onclick: () => overlay.remove() }, 'Cancel'),
+      saveBtn)));
+  name.focus();
 }
