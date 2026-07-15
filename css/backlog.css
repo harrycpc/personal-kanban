@@ -1,0 +1,24 @@
+.backlog-layout{display:flex;gap:16px;min-height:100%}
+.epic-panel{width:220px;flex-shrink:0;border-right:1px solid var(--line);padding-right:12px}
+.epic-panel h3{font-size:12px;text-transform:uppercase;color:var(--text-subtle);margin-bottom:8px}
+.epic-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:var(--radius);
+  cursor:pointer;font-size:13px}
+.epic-item:hover{background:#EBECF0}
+.epic-item.active{background:var(--blue-light)}
+.epic-dot{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+.epic-item .edit{margin-left:auto;visibility:hidden;padding:0 4px}
+.epic-item:hover .edit{visibility:visible}
+.epic-swatches{display:flex;gap:6px;flex-wrap:wrap}
+.epic-swatch{width:24px;height:24px;border-radius:4px;border:2px solid transparent;cursor:pointer}
+.epic-swatch.selected{border-color:var(--text)}
+.backlog-main{flex:1;min-width:0}
+.backlog-section{margin-bottom:24px}
+.backlog-section h3{font-size:13px;font-weight:600;margin-bottom:8px}
+.backlog-section h3 .count{color:var(--text-faint);font-weight:400}
+.backlog-list{border:2px dashed transparent;border-radius:var(--radius);min-height:40px}
+.backlog-list:empty{border-color:var(--line)}
+.backlog-row{display:flex;align-items:center;gap:8px;background:#fff;border-bottom:1px solid var(--line);
+  padding:8px;cursor:pointer;font-size:13px}
+.backlog-row:hover{background:#FAFBFC}
+.backlog-row .key{color:var(--text-subtle);flex-shrink:0}
+.backlog-row .title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

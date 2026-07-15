@@ -1,0 +1,38 @@
+.board-header{margin-bottom:16px}
+.board-title{font-size:24px;font-weight:500;margin-bottom:12px}
+.board-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.board-controls .spacer{flex:1}
+.filter-search{max-width:200px;width:200px}
+.filter-select{width:auto}
+.filter-chip{border:none;background:#F4F5F7;border-radius:var(--radius);padding:6px 10px;font-size:14px}
+.filter-chip.active{background:var(--blue-light);color:var(--blue)}
+.board{display:flex;gap:8px;align-items:flex-start}
+.column{background:var(--board-bg);border-radius:5px;width:270px;flex-shrink:0;padding:8px;
+  display:flex;flex-direction:column}
+.column-header{display:flex;align-items:center;gap:6px;padding:4px 8px 10px;font-size:12px;font-weight:600;
+  color:var(--text-subtle);text-transform:uppercase;letter-spacing:.5px}
+.column-header .count{font-weight:400}
+.column-header.over-wip{color:var(--red)}
+.column-header.over-wip .count{background:var(--red-light);color:var(--red);border-radius:3px;padding:0 4px}
+.column-list{display:flex;flex-direction:column;gap:6px;min-height:8px}
+.card{background:var(--card-bg);border-radius:var(--radius);box-shadow:var(--shadow);padding:10px;
+  cursor:pointer;display:flex;flex-direction:column;gap:6px}
+.card:hover{background:#FAFBFC}
+.card.ghost{opacity:.4}
+.card-title{font-size:14px;line-height:1.35}
+.card-labels{display:flex;flex-wrap:wrap;gap:4px}
+.card-meta{display:flex;gap:6px;align-items:center}
+.card-footer{display:flex;align-items:center;gap:6px}
+.card-footer .key{font-size:12px;color:var(--text-subtle);font-weight:500}
+.card-footer .key.done{text-decoration:line-through}
+.card-footer .right{margin-left:auto;display:flex;align-items:center;gap:6px}
+.card-footer .avatar{width:20px;height:20px}
+.col-add{border:none;background:none;text-align:left;padding:8px;border-radius:var(--radius);
+  color:var(--text-subtle);font-size:14px;margin-top:4px;width:100%}
+.col-add:hover{background:#EBECF0}
+.empty-hint{color:var(--text-faint);font-size:13px;padding:20px 8px;text-align:center}
+.swimlane{margin-bottom:16px}
+.swimlane-header{display:flex;align-items:center;gap:8px;padding:6px 4px;font-weight:600;cursor:pointer;font-size:14px}
+.swimlane-header .caret{transition:transform .15s;display:inline-block}
+.swimlane.collapsed .caret{transform:rotate(-90deg)}
+.swimlane.collapsed .board{display:none}

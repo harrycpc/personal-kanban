@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Personal Kanban</title>
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/chrome.css">
+<link rel="stylesheet" href="css/board.css">
+<link rel="stylesheet" href="css/backlog.css">
+<link rel="stylesheet" href="css/modal.css">
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+</head>
+<body>
+  <div id="signin" hidden>
+    <div class="signin-card">
+      <h1>Personal Kanban</h1>
+      <p>Track your goals on your own JIRA-style board.</p>
+      <button id="btn-signin" class="btn btn-primary">Sign in with Google</button>
+      <p id="signin-error" class="form-error" hidden></p>
+    </div>
+  </div>
+
+  <div id="app" hidden>
+    <header id="topnav">
+      <button id="btn-sidebar-toggle" class="icon-btn" title="Toggle sidebar">☰</button>
+      <div class="brand"><span class="brand-mark"></span>Personal Kanban</div>
+      <button id="btn-create" class="btn btn-primary">Create</button>
+      <div class="topnav-right">
+        <span id="offline-badge" hidden>Offline</span>
+        <div class="avatar-wrap">
+          <img id="nav-avatar" class="avatar" alt="Your avatar" referrerpolicy="no-referrer">
+          <div id="avatar-menu" class="dropdown" hidden>
+            <div id="menu-email" class="dropdown-label"></div>
+            <button id="btn-signout" class="dropdown-item">Sign out</button>
+          </div>
+        </div>
+      </div>
+    </header>
+    <div id="app-body">
+      <nav id="sidebar">
+        <div class="project">
+          <div class="project-icon" id="project-icon"></div>
+          <div>
+            <div class="project-name" id="project-name"></div>
+            <div class="project-sub">Kanban project</div>
+          </div>
+        </div>
+        <a href="#/board" class="nav-item" data-route="board"><span class="nav-icon">▦</span> Board</a>
+        <a href="#/backlog" class="nav-item" data-route="backlog"><span class="nav-icon">☰</span> Backlog</a>
+      </nav>
+      <main id="view"></main>
+    </div>
+  </div>
+
+  <div id="modal-root"></div>
+  <div id="toast-root"></div>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
