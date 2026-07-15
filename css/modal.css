@@ -32,3 +32,9 @@
 .link-row a{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
 .inline-two{display:flex;gap:8px}
 .inline-two input{flex:1}
+.column-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.column-row input:first-child{flex:1}
+.column-row input[type=number]{width:90px}
+.column-row-head{font-size:11px;color:var(--text-subtle);text-transform:uppercase}
+.column-row-head span:first-child{flex:1}
+.column-row-head span:nth-child(2){width:90px}

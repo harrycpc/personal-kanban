@@ -4,6 +4,7 @@ import * as store from './store.js';
 import { isOverdue, formatDue, appendActivity, matchesFilters, todayLocalISO } from './logic.js';
 import { openCreateModal, openDetailModal } from './detail.js';
 import { filterBar } from './filters.js';
+import { openColumnSettings } from './columns.js';
 
 let suppressClick = false;
 
@@ -28,7 +29,8 @@ function boardHeader(paintBody) {
     el('div', { class: 'board-controls' },
       ...filterBar(paintBody),
       el('div', { class: 'spacer' }),
-      gb));
+      gb,
+      el('button', { class: 'icon-btn', title: 'Board settings', onclick: openColumnSettings }, '⚙')));
 }
 
 function boardBody() {
