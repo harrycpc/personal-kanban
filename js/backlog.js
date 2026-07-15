@@ -29,6 +29,7 @@ function section(title, status) {
 
 function filteredByEpic(issues) {
   if (!state.filters.epicId) return issues;
+  if (state.filters.epicId === 'none') return issues.filter(i => !i.epicId);
   return issues.filter(i => i.epicId === state.filters.epicId);
 }
 

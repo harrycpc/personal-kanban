@@ -42,3 +42,22 @@ export const PRIORITIES = [
 ];
 
 export const TYPES = [['task', 'Task'], ['story', 'Story'], ['bug', 'Bug']];
+
+export function matchesFilters(issue, f) {
+  if (f.text) {
+    const hay = [issue.title, issue.description, issue.key, ...(issue.labels || [])]
+      .join(' ').toLowerCase();
+    if (!hay.includes(f.text.toLowerCase())) return false;
+  }
+  if (f.type && issue.type !== f.type) return false;
+  if (f.epicId) {
+    if (f.epicId === 'none') { if (issue.epicId) return false; }
+    else if (issue.epicId !== f.epicId) return false;
+  }
+  if (f.label && !(issue.labels || []).includes(f.label)) return false;
+  if (f.overdue) {
+    if (issue.status === f.doneStatus) return false;
+    if (!isOverdue(issue.dueDate, f.today)) return false;
+  }
+  return true;
+}

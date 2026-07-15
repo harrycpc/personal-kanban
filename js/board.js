@@ -1,16 +1,20 @@
 import { state, columnsSorted, issuesByStatus, isDoneStatus, findEpic, rerender, statusName } from './state.js';
 import { el, iconEl, typeIconHtml, priorityIconHtml, toast } from './ui.js';
 import * as store from './store.js';
-import { isOverdue, formatDue, appendActivity } from './logic.js';
+import { isOverdue, formatDue, appendActivity, matchesFilters, todayLocalISO } from './logic.js';
 import { openCreateModal, openDetailModal } from './detail.js';
+import { filterBar } from './filters.js';
 
 let suppressClick = false;
 
 export function renderBoard(view) {
-  view.replaceChildren(boardHeader(), boardBody());
+  const body = el('div');
+  const paintBody = () => body.replaceChildren(boardBody());
+  view.replaceChildren(boardHeader(paintBody), body);
+  paintBody();
 }
 
-function boardHeader() {
+function boardHeader(paintBody) {
   const gb = el('button', {
     class: 'filter-chip' + (state.groupByEpic ? ' active' : ''),
     onclick: () => {
@@ -21,7 +25,10 @@ function boardHeader() {
   }, `Group by: ${state.groupByEpic ? 'Epic' : 'None'}`);
   return el('div', { class: 'board-header' },
     el('div', { class: 'board-title' }, `${state.userDoc.projectName} board`),
-    el('div', { class: 'board-controls' }, el('div', { class: 'spacer' }), gb));
+    el('div', { class: 'board-controls' },
+      ...filterBar(paintBody),
+      el('div', { class: 'spacer' }),
+      gb));
 }
 
 function boardBody() {
@@ -56,8 +63,18 @@ function boardBody() {
   }));
 }
 
+function visibleIssues(status) {
+  const cols = columnsSorted();
+  const f = {
+    ...state.filters,
+    today: todayLocalISO(),
+    doneStatus: cols.length ? cols[cols.length - 1].id : '',
+  };
+  return issuesByStatus(status).filter(i => matchesFilters(i, f));
+}
+
 function columnEl(col, laneEpicId, group) {
-  let issues = issuesByStatus(col.id);
+  let issues = visibleIssues(col.id);
   if (laneEpicId !== undefined) {
     issues = issues.filter(i => (i.epicId || null) === laneEpicId);
   }

@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   newId, suggestKeyPrefix, todayLocalISO, isOverdue,
-  appendActivity, allLabels, formatDue, EPIC_COLORS, PRIORITIES, TYPES,
+  appendActivity, allLabels, formatDue, EPIC_COLORS, PRIORITIES, TYPES, matchesFilters,
 } from '../js/logic.js';
 
 test('newId returns distinct non-empty strings', () => {
@@ -62,4 +62,47 @@ test('constants are well-formed', () => {
   assert.equal(EPIC_COLORS.length, 8);
   assert.deepEqual(PRIORITIES.map(p => p[0]), ['highest', 'high', 'medium', 'low', 'lowest']);
   assert.deepEqual(TYPES.map(t => t[0]), ['task', 'story', 'bug']);
+});
+
+const issue = {
+  title: 'Fix login flow', description: 'OAuth redirect bug', key: 'HG-7',
+  labels: ['auth', 'web'], type: 'bug', epicId: 'e1',
+  dueDate: '2026-07-01', status: 'col-doing',
+};
+
+test('matchesFilters: empty filters match everything', () => {
+  assert.equal(matchesFilters(issue, {}), true);
+});
+
+test('matchesFilters: text searches title/description/key/labels, case-insensitive', () => {
+  assert.equal(matchesFilters(issue, { text: 'oauth' }), true);
+  assert.equal(matchesFilters(issue, { text: 'hg-7' }), true);
+  assert.equal(matchesFilters(issue, { text: 'AUTH' }), true);
+  assert.equal(matchesFilters(issue, { text: 'payments' }), false);
+});
+
+test('matchesFilters: type/label/epic narrow correctly', () => {
+  assert.equal(matchesFilters(issue, { type: 'bug' }), true);
+  assert.equal(matchesFilters(issue, { type: 'task' }), false);
+  assert.equal(matchesFilters(issue, { label: 'web' }), true);
+  assert.equal(matchesFilters(issue, { label: 'infra' }), false);
+  assert.equal(matchesFilters(issue, { epicId: 'e1' }), true);
+  assert.equal(matchesFilters(issue, { epicId: 'e2' }), false);
+});
+
+test("matchesFilters: epicId 'none' matches only epic-less issues", () => {
+  assert.equal(matchesFilters(issue, { epicId: 'none' }), false);
+  assert.equal(matchesFilters({ ...issue, epicId: null }, { epicId: 'none' }), true);
+});
+
+test('matchesFilters: overdue respects today and done column', () => {
+  const f = { overdue: true, today: '2026-07-15', doneStatus: 'col-done' };
+  assert.equal(matchesFilters(issue, f), true);
+  assert.equal(matchesFilters({ ...issue, dueDate: '2026-08-01' }, f), false);
+  assert.equal(matchesFilters({ ...issue, status: 'col-done' }, f), false);
+});
+
+test('matchesFilters: filters combine with AND', () => {
+  assert.equal(matchesFilters(issue, { text: 'login', type: 'bug', label: 'auth' }), true);
+  assert.equal(matchesFilters(issue, { text: 'login', type: 'story' }), false);
 });
