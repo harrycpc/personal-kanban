@@ -1,7 +1,7 @@
-import { state, columnsSorted, issuesByStatus, isDoneStatus, findEpic, rerender } from './state.js';
+import { state, columnsSorted, issuesByStatus, isDoneStatus, findEpic, rerender, statusName } from './state.js';
 import { el, iconEl, typeIconHtml, priorityIconHtml, toast } from './ui.js';
 import * as store from './store.js';
-import { isOverdue, formatDue } from './logic.js';
+import { isOverdue, formatDue, appendActivity } from './logic.js';
 import { openCreateModal, openDetailModal } from './detail.js';
 
 let suppressClick = false;
@@ -151,6 +151,14 @@ async function handleDrop(evt) {
     [...listEl.querySelectorAll('.card')].forEach((cardEl, i) => {
       updates.push({ id: cardEl.dataset.id, status, order: i });
     });
+  }
+  if (evt.from !== evt.to) {
+    const movedId = evt.item.dataset.id;
+    const moved = updates.find(u => u.id === movedId);
+    const src = state.issues.find(i => i.id === movedId);
+    if (moved && src) {
+      moved.activity = appendActivity(src.activity, `Moved to ${statusName(moved.status)}`);
+    }
   }
   try { await store.batchUpdateIssues(updates); }
   catch (e) { toast('Reorder failed: ' + e.message); }

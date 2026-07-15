@@ -1,10 +1,10 @@
-import { state, columnsSorted, issuesByStatus, findEpic, rerender } from './state.js';
+import { state, columnsSorted, issuesByStatus, findEpic, rerender, statusName } from './state.js';
 import {
   el, iconEl, typeIconHtml, priorityIconHtml, toast, openModal, confirmDialog,
 } from './ui.js';
 import * as store from './store.js';
 import { openDetailModal } from './detail.js';
-import { EPIC_COLORS } from './logic.js';
+import { EPIC_COLORS, appendActivity } from './logic.js';
 
 let suppressClick = false;
 
@@ -56,6 +56,14 @@ async function handleBacklogDrop(evt) {
     [...listEl.querySelectorAll('.backlog-row')].forEach((rowEl, i) => {
       updates.push({ id: rowEl.dataset.id, status, order: i });
     });
+  }
+  if (evt.from !== evt.to) {
+    const movedId = evt.item.dataset.id;
+    const moved = updates.find(u => u.id === movedId);
+    const src = state.issues.find(i => i.id === movedId);
+    if (moved && src) {
+      moved.activity = appendActivity(src.activity, `Moved to ${statusName(moved.status)}`);
+    }
   }
   try { await store.batchUpdateIssues(updates); }
   catch (e) { toast('Reorder failed: ' + e.message); }

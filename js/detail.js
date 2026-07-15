@@ -140,7 +140,7 @@ export function openDetailModal(issueId) {
     el('div', { class: 'detail-section' }, el('h4', {}, 'Description'), desc),
     subtasksSection(issue, save),
     // Task 16 appends linksSection(issue, save) here.
-    // Task 15 appends commentsActivitySection(issue, save) here (always last).
+    commentsActivitySection(issue, save),
   );
 
   // --- right sidebar ---
@@ -229,6 +229,54 @@ function subtasksSection(issue, save) {
           },
         }, '×'))),
       addForm);
+  }
+  paint();
+  return wrap;
+}
+
+function commentsActivitySection(issue, save) {
+  let tab = 'comments';
+  const wrap = el('div', { class: 'detail-section' });
+  const input = el('textarea', { rows: '2', placeholder: 'Add a comment…' });
+  const form = el('form', {}, input,
+    el('div', { class: 'actions' },
+      el('button', { class: 'btn btn-primary', type: 'submit' }, 'Save')));
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const text = input.value.trim();
+    if (!text) return;
+    issue.comments = [...(issue.comments || []), { id: newId(), text, createdAt: Date.now() }];
+    save({ comments: issue.comments });
+    input.value = '';
+    paint();
+  });
+  function paint() {
+    const tabBtn = (id, label) => el('button', {
+      class: 'tab' + (tab === id ? ' active' : ''),
+      onclick: () => { tab = id; paint(); },
+    }, label);
+    const body = tab === 'comments'
+      ? el('div', {},
+          form,
+          [...(issue.comments || [])].reverse().map(c => el('div', { class: 'comment' },
+            el('div', { class: 'meta' },
+              state.user?.displayName || 'You', ' · ', new Date(c.createdAt).toLocaleString(),
+              el('button', {
+                class: 'icon-btn',
+                onclick: () => {
+                  issue.comments = issue.comments.filter(x => x.id !== c.id);
+                  save({ comments: issue.comments });
+                  paint();
+                },
+              }, '×')),
+            el('div', {}, c.text))))
+      : el('div', {},
+          [...(issue.activity || [])].reverse().map(a => el('div', { class: 'activity-item' },
+            a.text, el('span', { class: 'ts' }, new Date(a.ts).toLocaleString()))));
+    wrap.replaceChildren(
+      el('h4', {}, 'Activity'),
+      el('div', { class: 'tabs' }, tabBtn('comments', 'Comments'), tabBtn('activity', 'History')),
+      body);
   }
   paint();
   return wrap;
