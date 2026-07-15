@@ -139,7 +139,7 @@ export function openDetailModal(issueId) {
     title,
     el('div', { class: 'detail-section' }, el('h4', {}, 'Description'), desc),
     subtasksSection(issue, save),
-    // Task 16 appends linksSection(issue, save) here.
+    linksSection(issue, save),
     commentsActivitySection(issue, save),
   );
 
@@ -277,6 +277,47 @@ function commentsActivitySection(issue, save) {
       el('h4', {}, 'Activity'),
       el('div', { class: 'tabs' }, tabBtn('comments', 'Comments'), tabBtn('activity', 'History')),
       body);
+  }
+  paint();
+  return wrap;
+}
+
+function linksSection(issue, save) {
+  const wrap = el('div', { class: 'detail-section' });
+  const urlInput = el('input', { type: 'url', placeholder: 'https://…' });
+  const titleInput = el('input', { placeholder: 'Title (optional)' });
+  const addForm = el('form', {},
+    el('div', { class: 'inline-two' }, urlInput, titleInput,
+      el('button', { class: 'btn', type: 'submit' }, 'Add')));
+  addForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const url = urlInput.value.trim();
+    if (!url) return;
+    let parsed;
+    try { parsed = new URL(url); } catch { toast('Enter a valid URL (https://…)'); return; }
+    if (!/^https?:$/.test(parsed.protocol)) { toast('Only http(s) links are allowed'); return; }
+    issue.links = [...(issue.links || []), { id: newId(), url, title: titleInput.value.trim() }];
+    save({ links: issue.links });
+    urlInput.value = '';
+    titleInput.value = '';
+    paint();
+  });
+  function paint() {
+    const links = issue.links || [];
+    wrap.replaceChildren(
+      el('h4', {}, 'Links'),
+      links.map(l => el('div', { class: 'link-row' },
+        '🔗',
+        el('a', { href: l.url, target: '_blank', rel: 'noopener noreferrer' }, l.title || l.url),
+        el('button', {
+          class: 'icon-btn',
+          onclick: () => {
+            issue.links = issue.links.filter(x => x.id !== l.id);
+            save({ links: issue.links });
+            paint();
+          },
+        }, '×'))),
+      addForm);
   }
   paint();
   return wrap;
