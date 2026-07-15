@@ -4,6 +4,8 @@ import { initSignin, wireSignout, onboardingDialog } from './auth.js';
 import * as store from './store.js';
 import { state, setRenderer, rerender } from './state.js';
 import { el, openModal, toast } from './ui.js';
+import { renderBoard } from './board.js';
+import { openCreateModal } from './detail.js';
 
 const signinEl = document.getElementById('signin');
 const appEl = document.getElementById('app');
@@ -29,6 +31,8 @@ document.getElementById('nav-avatar').addEventListener('click', e => {
   avatarMenu.hidden = !avatarMenu.hidden;
 });
 document.addEventListener('click', () => { avatarMenu.hidden = true; });
+
+document.getElementById('btn-create').addEventListener('click', () => openCreateModal());
 
 const offlineBadge = document.getElementById('offline-badge');
 const paintOnline = () => { offlineBadge.hidden = navigator.onLine; };
@@ -74,7 +78,7 @@ function renderView() {
   if (state.route === 'backlog') {
     view.replaceChildren(el('div', { class: 'board-title' }, 'Backlog'));
   } else {
-    view.replaceChildren(el('div', { class: 'board-title' }, 'Board'));
+    renderBoard(view);
   }
 }
 

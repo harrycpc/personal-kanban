@@ -48,3 +48,33 @@ export function subscribeIssues(cb) {
 export function subscribeEpics(cb) {
   return onSnapshot(epicsCol(), s => cb(s.docs.map(d => ({ id: d.id, ...d.data() }))));
 }
+
+export async function createIssue(data) {
+  const ref = doc(issuesCol());
+  let key;
+  await runTransaction(db, async tx => {
+    const snap = await tx.get(userRef());
+    const u = snap.data();
+    const n = (u.issueCounter || 0) + 1;
+    key = `${u.keyPrefix}-${n}`;
+    tx.update(userRef(), { issueCounter: n });
+    tx.set(ref, { ...data, key, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+  });
+  return key;
+}
+
+export async function updateIssue(id, fields) {
+  await updateDoc(issueRef(id), { ...fields, updatedAt: serverTimestamp() });
+}
+
+export async function deleteIssue(id) {
+  await deleteDoc(issueRef(id));
+}
+
+export async function batchUpdateIssues(updates) {
+  const batch = writeBatch(db);
+  for (const { id, ...fields } of updates) {
+    batch.update(issueRef(id), { ...fields, updatedAt: serverTimestamp() });
+  }
+  await batch.commit();
+}
