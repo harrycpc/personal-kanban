@@ -138,7 +138,7 @@ export function openDetailModal(issueId) {
   const detailMain = el('div', { class: 'detail-main' },
     title,
     el('div', { class: 'detail-section' }, el('h4', {}, 'Description'), desc),
-    // Task 14 appends subtasksSection(issue, save) here.
+    subtasksSection(issue, save),
     // Task 16 appends linksSection(issue, save) here.
     // Task 15 appends commentsActivitySection(issue, save) here (always last).
   );
@@ -188,4 +188,48 @@ export function openDetailModal(issueId) {
   const overlay = openModal(el('div', { class: 'modal modal-detail' },
     header,
     el('div', { class: 'detail-grid' }, detailMain, side)));
+}
+
+function subtasksSection(issue, save) {
+  const wrap = el('div', { class: 'detail-section' });
+  const addInput = el('input', { placeholder: 'Add subtask…' });
+  const addForm = el('form', {}, addInput);
+  addForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const text = addInput.value.trim();
+    if (!text) return;
+    issue.subtasks = [...(issue.subtasks || []), { id: newId(), text, done: false }];
+    save({ subtasks: issue.subtasks });
+    addInput.value = '';
+    paint();
+  });
+  function paint() {
+    const subs = issue.subtasks || [];
+    const done = subs.filter(s => s.done).length;
+    wrap.replaceChildren(
+      el('h4', {}, subs.length ? `Subtasks (${done}/${subs.length})` : 'Subtasks'),
+      subs.length > 0 && el('div', { class: 'progress' },
+        el('div', { style: `width:${Math.round(100 * done / subs.length)}%` })),
+      subs.map(s => el('div', { class: 'subtask-row' + (s.done ? ' done' : '') },
+        el('input', {
+          type: 'checkbox', checked: s.done,
+          onchange: () => {
+            issue.subtasks = issue.subtasks.map(x => x.id === s.id ? { ...x, done: !s.done } : x);
+            save({ subtasks: issue.subtasks });
+            paint();
+          },
+        }),
+        el('span', { class: 'subtask-text' }, s.text),
+        el('button', {
+          class: 'icon-btn',
+          onclick: () => {
+            issue.subtasks = issue.subtasks.filter(x => x.id !== s.id);
+            save({ subtasks: issue.subtasks });
+            paint();
+          },
+        }, '×'))),
+      addForm);
+  }
+  paint();
+  return wrap;
 }
