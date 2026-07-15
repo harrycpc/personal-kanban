@@ -3,7 +3,7 @@ import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/f
 import { initSignin, wireSignout, onboardingDialog } from './auth.js';
 import * as store from './store.js';
 import { state, setRenderer, rerender } from './state.js';
-import { el } from './ui.js';
+import { el, openModal, toast } from './ui.js';
 
 const signinEl = document.getElementById('signin');
 const appEl = document.getElementById('app');
@@ -11,6 +11,54 @@ let unsubs = [];
 
 initSignin();
 wireSignout();
+
+function applyRoute() {
+  state.route = location.hash.startsWith('#/backlog') ? 'backlog' : 'board';
+  document.querySelectorAll('.nav-item').forEach(a =>
+    a.classList.toggle('active', a.dataset.route === state.route));
+  rerender();
+}
+window.addEventListener('hashchange', applyRoute);
+
+document.getElementById('btn-sidebar-toggle').addEventListener('click', () =>
+  document.getElementById('sidebar').classList.toggle('collapsed'));
+
+const avatarMenu = document.getElementById('avatar-menu');
+document.getElementById('nav-avatar').addEventListener('click', e => {
+  e.stopPropagation();
+  avatarMenu.hidden = !avatarMenu.hidden;
+});
+document.addEventListener('click', () => { avatarMenu.hidden = true; });
+
+const offlineBadge = document.getElementById('offline-badge');
+const paintOnline = () => { offlineBadge.hidden = navigator.onLine; };
+window.addEventListener('online', paintOnline);
+window.addEventListener('offline', paintOnline);
+paintOnline();
+
+document.querySelector('#sidebar .project').addEventListener('click', () => {
+  if (!state.userDoc) return;
+  const input = el('input', { value: state.userDoc.projectName });
+  const overlay = openModal(el('div', { class: 'modal' },
+    el('h2', {}, 'Rename project'),
+    el('div', { class: 'field' }, el('label', {}, 'Project name'), input),
+    el('div', { class: 'field' },
+      el('label', {}, 'Key'),
+      el('span', { class: 'static' }, `${state.userDoc.keyPrefix} (permanent)`)),
+    el('div', { class: 'actions' },
+      el('button', { class: 'btn', onclick: () => overlay.remove() }, 'Cancel'),
+      el('button', {
+        class: 'btn btn-primary',
+        onclick: async () => {
+          const v = input.value.trim();
+          if (!v) return;
+          try { await store.updateProject({ projectName: v }); }
+          catch (err) { toast('Rename failed: ' + err.message); }
+          overlay.remove();
+        },
+      }, 'Save')),
+  ));
+});
 
 setRenderer(renderApp);
 
@@ -56,4 +104,5 @@ onAuthStateChanged(auth, async user => {
     store.subscribeIssues(list => { state.issues = list; rerender(); }),
     store.subscribeEpics(list => { state.epics = list; rerender(); }),
   ];
+  applyRoute();
 });
