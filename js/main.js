@@ -6,6 +6,7 @@ import { state, setRenderer, rerender } from './state.js';
 import { el, openModal, toast } from './ui.js';
 import { renderBoard } from './board.js';
 import { openCreateModal } from './detail.js';
+import { renderBacklog } from './backlog.js';
 
 const signinEl = document.getElementById('signin');
 const appEl = document.getElementById('app');
@@ -75,11 +76,8 @@ function renderApp() {
 
 function renderView() {
   const view = document.getElementById('view');
-  if (state.route === 'backlog') {
-    view.replaceChildren(el('div', { class: 'board-title' }, 'Backlog'));
-  } else {
-    renderBoard(view);
-  }
+  if (state.route === 'backlog') renderBacklog(view);
+  else renderBoard(view);
 }
 
 onAuthStateChanged(auth, async user => {
