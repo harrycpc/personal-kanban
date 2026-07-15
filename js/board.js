@@ -1,4 +1,4 @@
-import { state, columnsSorted, issuesByStatus, isDoneStatus, findEpic } from './state.js';
+import { state, columnsSorted, issuesByStatus, isDoneStatus, findEpic, rerender } from './state.js';
 import { el, iconEl, typeIconHtml, priorityIconHtml, toast } from './ui.js';
 import * as store from './store.js';
 import { isOverdue, formatDue } from './logic.js';
@@ -7,24 +7,68 @@ import { openCreateModal, openDetailModal } from './detail.js';
 let suppressClick = false;
 
 export function renderBoard(view) {
-  const boardEl = el('div', { class: 'board' }, columnsSorted().map(col => columnEl(col)));
-  view.replaceChildren(
-    el('div', { class: 'board-header' },
-      el('div', { class: 'board-title' }, `${state.userDoc.projectName} board`)),
-    boardEl,
-  );
-  initSortables(boardEl);
+  view.replaceChildren(boardHeader(), boardBody());
 }
 
-function columnEl(col) {
-  const issues = issuesByStatus(col.id);
-  const over = col.wipLimit != null && issues.length > col.wipLimit;
+function boardHeader() {
+  const gb = el('button', {
+    class: 'filter-chip' + (state.groupByEpic ? ' active' : ''),
+    onclick: () => {
+      state.groupByEpic = !state.groupByEpic;
+      localStorage.setItem('pk-groupby', state.groupByEpic ? 'epic' : 'none');
+      rerender();
+    },
+  }, `Group by: ${state.groupByEpic ? 'Epic' : 'None'}`);
+  return el('div', { class: 'board-header' },
+    el('div', { class: 'board-title' }, `${state.userDoc.projectName} board`),
+    el('div', { class: 'board-controls' }, el('div', { class: 'spacer' }), gb));
+}
+
+function boardBody() {
+  if (!state.groupByEpic) {
+    const boardEl = el('div', { class: 'board' },
+      columnsSorted().map(col => columnEl(col, undefined, 'board')));
+    queueMicrotask(() => initSortables(boardEl));
+    return boardEl;
+  }
+  const lanes = [
+    ...state.epics.map(e => ({ id: e.id, name: e.name, color: e.color })),
+    { id: null, name: 'Everything else', color: '#6B778C' },
+  ];
+  return el('div', {}, lanes.map(lane => {
+    const laneKey = lane.id ?? 'none';
+    const collapsed = state.collapsedLanes.has(laneKey);
+    const laneBoard = el('div', { class: 'board' },
+      columnsSorted().map(col => columnEl(col, lane.id, `board-${laneKey}`)));
+    if (!collapsed) queueMicrotask(() => initSortables(laneBoard));
+    return el('div', { class: 'swimlane' + (collapsed ? ' collapsed' : '') },
+      el('div', {
+        class: 'swimlane-header',
+        onclick: () => {
+          collapsed ? state.collapsedLanes.delete(laneKey) : state.collapsedLanes.add(laneKey);
+          rerender();
+        },
+      },
+        el('span', { class: 'caret' }, '▾'),
+        el('span', { class: 'epic-dot', style: `background:${lane.color}` }),
+        lane.name),
+      laneBoard);
+  }));
+}
+
+function columnEl(col, laneEpicId, group) {
+  let issues = issuesByStatus(col.id);
+  if (laneEpicId !== undefined) {
+    issues = issues.filter(i => (i.epicId || null) === laneEpicId);
+  }
+  const allInCol = issuesByStatus(col.id);
+  const over = col.wipLimit != null && allInCol.length > col.wipLimit;
   return el('div', { class: 'column' },
     el('div', { class: 'column-header' + (over ? ' over-wip' : '') },
       col.name,
       el('span', { class: 'count' },
-        col.wipLimit != null ? `${issues.length}/${col.wipLimit}` : String(issues.length))),
-    el('div', { class: 'column-list', dataset: { status: col.id } }, issues.map(issueCard)),
+        col.wipLimit != null ? `${allInCol.length}/${col.wipLimit}` : String(issues.length))),
+    el('div', { class: 'column-list', dataset: { status: col.id, group } }, issues.map(issueCard)),
     inlineCreate(col));
 }
 
