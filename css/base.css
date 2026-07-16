@@ -28,7 +28,7 @@ input[type=checkbox]{width:auto}
 .chip-due.overdue{background:var(--red-light);color:var(--red)}
 .points-badge{background:#EBECF0;border-radius:10px;font-size:11px;font-weight:600;padding:1px 8px;color:var(--text-subtle)}
 .epic-pill{display:inline-block;font-size:11px;font-weight:600;color:#fff;padding:1px 8px;border-radius:3px;
-  max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;align-self:flex-start}
+  max-width:160px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;align-self:flex-start;flex-shrink:1}
 .icon{display:inline-flex;flex-shrink:0}
 .icon svg{width:16px;height:16px;display:block}
 #toast-root{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:300;display:flex;flex-direction:column;gap:8px}

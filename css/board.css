@@ -8,13 +8,13 @@
 .filter-chip.active{background:var(--blue-light);color:var(--blue)}
 .board{display:flex;gap:8px;align-items:flex-start}
 .column{background:var(--board-bg);border-radius:5px;width:270px;flex-shrink:0;padding:8px;
-  display:flex;flex-direction:column}
+  display:flex;flex-direction:column;min-height:240px}
 .column-header{display:flex;align-items:center;gap:6px;padding:4px 8px 10px;font-size:12px;font-weight:600;
   color:var(--text-subtle);text-transform:uppercase;letter-spacing:.5px}
 .column-header .count{font-weight:400}
 .column-header.over-wip{color:var(--red)}
 .column-header.over-wip .count{background:var(--red-light);color:var(--red);border-radius:3px;padding:0 4px}
-.column-list{display:flex;flex-direction:column;gap:6px;min-height:8px}
+.column-list{display:flex;flex-direction:column;gap:6px;min-height:40px;flex:1}
 .card{background:var(--card-bg);border-radius:var(--radius);box-shadow:var(--shadow);padding:10px;
   cursor:pointer;display:flex;flex-direction:column;gap:6px}
 .card:hover{background:#FAFBFC}
