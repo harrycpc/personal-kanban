@@ -210,7 +210,7 @@ function subtasksSection(issue, save) {
       el('h4', {}, subs.length ? `Subtasks (${done}/${subs.length})` : 'Subtasks'),
       subs.length > 0 && el('div', { class: 'progress' },
         el('div', { style: `width:${Math.round(100 * done / subs.length)}%` })),
-      subs.map(s => el('div', { class: 'subtask-row' + (s.done ? ' done' : '') },
+      ...subs.map(s => el('div', { class: 'subtask-row' + (s.done ? ' done' : '') },
         el('input', {
           type: 'checkbox', checked: s.done,
           onchange: () => {
@@ -306,7 +306,7 @@ function linksSection(issue, save) {
     const links = issue.links || [];
     wrap.replaceChildren(
       el('h4', {}, 'Links'),
-      links.map(l => el('div', { class: 'link-row' },
+      ...links.map(l => el('div', { class: 'link-row' },
         '🔗',
         el('a', { href: l.url, target: '_blank', rel: 'noopener noreferrer' }, l.title || l.url),
         el('button', {
