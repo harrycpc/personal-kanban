@@ -15,9 +15,10 @@
 .detail-title:hover{background:#EBECF0}
 .detail-section{margin:16px 0}
 .detail-section>h4{font-size:12px;text-transform:uppercase;color:var(--text-subtle);margin-bottom:8px}
-.subtask-row{display:flex;align-items:center;gap:8px;padding:4px 0}
+.subtask-row{display:flex;align-items:center;gap:8px;padding:4px 0;cursor:grab}
 .subtask-row.done .subtask-text{text-decoration:line-through;color:var(--text-faint)}
 .subtask-row .subtask-text{flex:1}
+.subtask-row.ghost{opacity:.4}
 .progress{height:6px;background:#EBECF0;border-radius:3px;overflow:hidden;margin:6px 0}
 .progress>div{height:100%;background:var(--blue)}
 .tabs{display:flex;gap:4px;border-bottom:2px solid var(--line);margin-bottom:8px}

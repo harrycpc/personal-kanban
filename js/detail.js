@@ -192,6 +192,8 @@ export function openDetailModal(issueId) {
 
 function subtasksSection(issue, save) {
   const wrap = el('div', { class: 'detail-section' });
+  const header = el('div');
+  const listEl = el('div', { class: 'subtask-list' });
   const addInput = el('input', { placeholder: 'Add subtask…' });
   const addForm = el('form', {}, addInput);
   addForm.addEventListener('submit', e => {
@@ -203,34 +205,47 @@ function subtasksSection(issue, save) {
     addInput.value = '';
     paint();
   });
+
+  function subtaskRow(s) {
+    return el('div', { class: 'subtask-row' + (s.done ? ' done' : ''), dataset: { id: s.id } },
+      el('input', {
+        type: 'checkbox', checked: s.done,
+        onchange: () => {
+          issue.subtasks = issue.subtasks.map(x => x.id === s.id ? { ...x, done: !s.done } : x);
+          save({ subtasks: issue.subtasks });
+          paint();
+        },
+      }),
+      el('span', { class: 'subtask-text' }, s.text),
+      el('button', {
+        class: 'icon-btn',
+        onclick: () => {
+          issue.subtasks = issue.subtasks.filter(x => x.id !== s.id);
+          save({ subtasks: issue.subtasks });
+          paint();
+        },
+      }, '×'));
+  }
+
   function paint() {
     const subs = issue.subtasks || [];
     const done = subs.filter(s => s.done).length;
-    wrap.replaceChildren(
+    header.replaceChildren(
       el('h4', {}, subs.length ? `Subtasks (${done}/${subs.length})` : 'Subtasks'),
       subs.length > 0 && el('div', { class: 'progress' },
-        el('div', { style: `width:${Math.round(100 * done / subs.length)}%` })),
-      ...subs.map(s => el('div', { class: 'subtask-row' + (s.done ? ' done' : '') },
-        el('input', {
-          type: 'checkbox', checked: s.done,
-          onchange: () => {
-            issue.subtasks = issue.subtasks.map(x => x.id === s.id ? { ...x, done: !s.done } : x);
-            save({ subtasks: issue.subtasks });
-            paint();
-          },
-        }),
-        el('span', { class: 'subtask-text' }, s.text),
-        el('button', {
-          class: 'icon-btn',
-          onclick: () => {
-            issue.subtasks = issue.subtasks.filter(x => x.id !== s.id);
-            save({ subtasks: issue.subtasks });
-            paint();
-          },
-        }, '×'))),
-      addForm);
+        el('div', { style: `width:${Math.round(100 * done / subs.length)}%` })));
+    listEl.replaceChildren(...subs.map(subtaskRow));
   }
+
+  function handleReorder() {
+    const ids = [...listEl.querySelectorAll('.subtask-row')].map(r => r.dataset.id);
+    issue.subtasks = ids.map(id => issue.subtasks.find(s => s.id === id));
+    save({ subtasks: issue.subtasks });
+  }
+  new Sortable(listEl, { animation: 150, ghostClass: 'ghost', onEnd: handleReorder });
+
   paint();
+  wrap.replaceChildren(header, listEl, addForm);
   return wrap;
 }
 
