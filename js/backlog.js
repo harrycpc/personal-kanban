@@ -1,10 +1,10 @@
-import { state, columnsSorted, issuesByStatus, findEpic, rerender, statusName } from './state.js';
+import { state, columnsSorted, issuesByStatus, findEpic, rerender, statusName, isDoneStatus } from './state.js';
 import {
   el, iconEl, typeIconHtml, priorityIconHtml, toast, openModal, confirmDialog,
 } from './ui.js';
 import * as store from './store.js';
 import { openDetailModal } from './detail.js';
-import { EPIC_COLORS, appendActivity } from './logic.js';
+import { EPIC_COLORS, appendActivity, blockedByIssues } from './logic.js';
 
 let suppressClick = false;
 
@@ -35,12 +35,14 @@ function filteredByEpic(issues) {
 
 function backlogRow(issue) {
   const epic = issue.epicId ? findEpic(issue.epicId) : null;
+  const activelyBlocked = blockedByIssues(issue, state.issues).some(b => !isDoneStatus(b.status));
   const row = el('div', { class: 'backlog-row', dataset: { id: issue.id } },
     iconEl(typeIconHtml(issue.type), issue.type),
     el('span', { class: 'key' }, issue.key),
     el('span', { class: 'title' }, issue.title),
     epic && el('span', { class: 'epic-pill', style: `background:${epic.color}` }, epic.name),
     (issue.labels || []).map(l => el('span', { class: 'chip' }, l)),
+    activelyBlocked && el('span', { class: 'chip chip-blocked' }, 'Blocked'),
     issue.storyPoints != null && el('span', { class: 'points-badge' }, String(issue.storyPoints)),
     iconEl(priorityIconHtml(issue.priority), issue.priority));
   row.addEventListener('click', () => { if (!suppressClick) openDetailModal(issue.id); });

@@ -1,7 +1,7 @@
 import { state, columnsSorted, issuesByStatus, isDoneStatus, findEpic, rerender, statusName } from './state.js';
 import { el, iconEl, typeIconHtml, priorityIconHtml, toast } from './ui.js';
 import * as store from './store.js';
-import { isOverdue, formatDue, appendActivity, matchesFilters, todayLocalISO } from './logic.js';
+import { isOverdue, formatDue, appendActivity, matchesFilters, todayLocalISO, blockedByIssues } from './logic.js';
 import { openCreateModal, openDetailModal } from './detail.js';
 import { filterBar } from './filters.js';
 import { openColumnSettings } from './columns.js';
@@ -122,13 +122,15 @@ export function issueCard(issue) {
   const overdue = !done && isOverdue(issue.dueDate);
   const subTotal = (issue.subtasks || []).length;
   const subDone = (issue.subtasks || []).filter(s => s.done).length;
+  const activelyBlocked = blockedByIssues(issue, state.issues).some(b => !isDoneStatus(b.status));
   const card = el('div', { class: 'card', dataset: { id: issue.id } },
     epic && el('span', { class: 'epic-pill', style: `background:${epic.color}` }, epic.name),
     el('div', { class: 'card-title' }, issue.title),
     (issue.labels || []).length > 0 &&
       el('div', { class: 'card-labels' }, issue.labels.map(l => el('span', { class: 'chip' }, l))),
-    (issue.dueDate || subTotal > 0) &&
+    (issue.dueDate || subTotal > 0 || activelyBlocked) &&
       el('div', { class: 'card-meta' },
+        activelyBlocked && el('span', { class: 'chip chip-blocked' }, 'Blocked'),
         issue.dueDate && el('span', { class: 'chip chip-due' + (overdue ? ' overdue' : '') },
           formatDue(issue.dueDate)),
         subTotal > 0 && el('span', { class: 'chip' }, `${subDone}/${subTotal}`)),

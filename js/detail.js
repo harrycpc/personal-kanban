@@ -3,7 +3,7 @@ import {
   el, openModal, toast, selectEl, iconEl, typeIconHtml, priorityIconHtml, confirmDialog,
 } from './ui.js';
 import * as store from './store.js';
-import { allLabels, appendActivity, newId, PRIORITIES, TYPES } from './logic.js';
+import { allLabels, appendActivity, newId, PRIORITIES, TYPES, blockedByIssues, blockingIssues } from './logic.js';
 
 export function fieldWrap(label, node) {
   return el('div', { class: 'field' }, el('label', {}, label), node);
@@ -139,6 +139,7 @@ export function openDetailModal(issueId) {
     title,
     el('div', { class: 'detail-section' }, el('h4', {}, 'Description'), desc),
     subtasksSection(issue, save),
+    blockedBySection(issue, save),
     linksSection(issue, save),
     commentsActivitySection(issue, save),
   );
@@ -247,6 +248,63 @@ function subtasksSection(issue, save) {
   paint();
   wrap.replaceChildren(header, listEl, addForm);
   return wrap;
+}
+
+function blockedBySection(issue, save) {
+  const blockedByList = el('div');
+  const pickerWrap = el('div');
+  const blocksBlock = el('div');
+
+  function linkRow(other, removable) {
+    return el('div', { class: 'link-row' },
+      iconEl(typeIconHtml(other.type), other.type),
+      el('a', {
+        href: '#',
+        onclick: e => { e.preventDefault(); openDetailModal(other.id); },
+      }, `${other.key} ${other.title}`),
+      removable && el('button', {
+        class: 'icon-btn',
+        onclick: () => {
+          issue.blockedBy = (issue.blockedBy || []).filter(id => id !== other.id);
+          save({ blockedBy: issue.blockedBy });
+          paint();
+        },
+      }, '×'));
+  }
+
+  function buildPicker() {
+    const blockedIds = new Set(issue.blockedBy || []);
+    const options = state.issues
+      .filter(i => i.id !== issue.id && !blockedIds.has(i.id))
+      .sort((a, b) => a.key.localeCompare(b.key, undefined, { numeric: true }))
+      .map(i => [i.id, `${i.key} ${i.title}`]);
+    const sel = selectEl([['', 'Add a blocking issue…'], ...options], '');
+    sel.addEventListener('change', () => {
+      if (!sel.value) return;
+      issue.blockedBy = [...(issue.blockedBy || []), sel.value];
+      save({ blockedBy: issue.blockedBy });
+      paint();
+    });
+    pickerWrap.replaceChildren(sel);
+  }
+
+  function paint() {
+    const blockers = blockedByIssues(issue, state.issues);
+    const blocks = blockingIssues(issue, state.issues);
+    blockedByList.replaceChildren(...blockers.map(b => linkRow(b, true)));
+    buildPicker();
+    blocksBlock.replaceChildren(...(blocks.length > 0 ? [
+      el('h4', {}, 'Blocks'),
+      el('div', {}, ...blocks.map(b => linkRow(b, false))),
+    ] : []));
+  }
+
+  paint();
+  return el('div', { class: 'detail-section' },
+    el('h4', {}, 'Blocked by'),
+    blockedByList,
+    pickerWrap,
+    blocksBlock);
 }
 
 function commentsActivitySection(issue, save) {

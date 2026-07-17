@@ -61,3 +61,12 @@ export function matchesFilters(issue, f) {
   }
   return true;
 }
+
+export function blockedByIssues(issue, allIssues) {
+  const ids = new Set(issue.blockedBy || []);
+  return allIssues.filter(i => ids.has(i.id));
+}
+
+export function blockingIssues(issue, allIssues) {
+  return allIssues.filter(i => (i.blockedBy || []).includes(issue.id));
+}

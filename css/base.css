@@ -26,6 +26,7 @@ input[type=checkbox]{width:auto}
 .chip{display:inline-flex;align-items:center;font-size:11px;font-weight:600;padding:1px 6px;border-radius:3px;background:#EBECF0;color:var(--text-subtle)}
 .chip-x{border:none;background:none;font-size:12px;margin-left:4px;color:inherit;padding:0}
 .chip-due.overdue{background:var(--red-light);color:var(--red)}
+.chip-blocked{background:var(--red-light);color:var(--red)}
 .points-badge{background:#EBECF0;border-radius:10px;font-size:11px;font-weight:600;padding:1px 8px;color:var(--text-subtle)}
 .epic-pill{display:inline-block;font-size:11px;font-weight:600;color:#fff;padding:1px 8px;border-radius:3px;
   max-width:160px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;align-self:flex-start;flex-shrink:1}

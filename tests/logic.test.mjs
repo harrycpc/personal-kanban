@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   newId, suggestKeyPrefix, todayLocalISO, isOverdue,
   appendActivity, allLabels, formatDue, EPIC_COLORS, PRIORITIES, TYPES, matchesFilters,
+  blockedByIssues, blockingIssues,
 } from '../js/logic.js';
 
 test('newId returns distinct non-empty strings', () => {
@@ -105,4 +106,23 @@ test('matchesFilters: overdue respects today and done column', () => {
 test('matchesFilters: filters combine with AND', () => {
   assert.equal(matchesFilters(issue, { text: 'login', type: 'bug', label: 'auth' }), true);
   assert.equal(matchesFilters(issue, { text: 'login', type: 'story' }), false);
+});
+
+test('blockedByIssues: resolves referenced issues, ignores missing/deleted ids', () => {
+  const all = [{ id: 'a', key: 'A-1' }, { id: 'b', key: 'A-2' }];
+  assert.deepEqual(blockedByIssues({ blockedBy: ['a', 'missing'] }, all).map(i => i.id), ['a']);
+});
+
+test('blockedByIssues: empty when blockedBy is missing or empty', () => {
+  assert.deepEqual(blockedByIssues({}, [{ id: 'a' }]), []);
+  assert.deepEqual(blockedByIssues({ blockedBy: [] }, [{ id: 'a' }]), []);
+});
+
+test('blockingIssues: finds issues whose blockedBy references this issue', () => {
+  const all = [
+    { id: 'a', blockedBy: ['x'] },
+    { id: 'b', blockedBy: ['x', 'y'] },
+    { id: 'c', blockedBy: [] },
+  ];
+  assert.deepEqual(blockingIssues({ id: 'x' }, all).map(i => i.id), ['a', 'b']);
 });
