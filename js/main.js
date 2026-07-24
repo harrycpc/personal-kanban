@@ -109,7 +109,12 @@ async function pickInitialBoardId(boards, user) {
     title: 'Name your board', submitLabel: 'Create board',
     defaultName: first ? `${first}'s Kanban` : 'My Kanban',
   });
-  return store.createBoard(name, keyPrefix);
+  try {
+    return await store.createBoard(name, keyPrefix);
+  } catch (e) {
+    toast('Could not create your board: ' + e.message);
+    throw e;
+  }
 }
 
 onAuthStateChanged(auth, async user => {
@@ -135,7 +140,11 @@ onAuthStateChanged(auth, async user => {
     state.boards = list;
     if (!boardsInitialized) {
       boardsInitialized = true;
-      switchBoard(await pickInitialBoardId(list, user));
+      try {
+        switchBoard(await pickInitialBoardId(list, user));
+      } catch (e) {
+        boardsInitialized = false;
+      }
     } else {
       rerender();
     }
