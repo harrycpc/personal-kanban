@@ -1,44 +1,48 @@
 import {
-  collection, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot,
+  collection, doc, getDocs, setDoc, updateDoc, deleteDoc, onSnapshot,
   runTransaction, writeBatch, serverTimestamp,
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { db } from './firebase.js';
 import { newId } from './logic.js';
 
 let uid = null;
+let boardId = null;
 export function initStore(userId) { uid = userId; }
+export function setActiveBoard(id) { boardId = id; }
 
-const userRef = () => doc(db, 'users', uid);
-const issuesCol = () => collection(db, 'users', uid, 'issues');
-const issueRef = id => doc(db, 'users', uid, 'issues', id);
-const epicsCol = () => collection(db, 'users', uid, 'epics');
-const epicRef = id => doc(db, 'users', uid, 'epics', id);
+const boardsCol = () => collection(db, 'users', uid, 'boards');
+const boardRef = id => doc(db, 'users', uid, 'boards', id);
+const issuesCol = () => collection(db, 'users', uid, 'boards', boardId, 'issues');
+const issueRef = id => doc(db, 'users', uid, 'boards', boardId, 'issues', id);
+const epicsCol = () => collection(db, 'users', uid, 'boards', boardId, 'epics');
+const epicRef = id => doc(db, 'users', uid, 'boards', boardId, 'epics', id);
 
-export async function getUserDoc() {
-  const snap = await getDoc(userRef());
-  return snap.exists() ? snap.data() : null;
+export function subscribeBoards(cb) {
+  return onSnapshot(boardsCol(), s => cb(s.docs.map(d => ({ id: d.id, ...d.data() }))));
 }
 
-export async function createUserDoc(profile, projectName, keyPrefix) {
-  await setDoc(userRef(), {
-    displayName: profile.displayName || '',
-    photoURL: profile.photoURL || '',
-    projectName,
+export function subscribeBoard(id, cb) {
+  return onSnapshot(boardRef(id), s => cb(s.exists() ? { id: s.id, ...s.data() } : null));
+}
+
+export async function createBoard(name, keyPrefix) {
+  const existing = await getDocs(boardsCol());
+  const ref = doc(boardsCol());
+  await setDoc(ref, {
+    name,
     keyPrefix,
     issueCounter: 0,
-    columns: ['To Do', 'In Progress', 'Done'].map((name, i) => ({
-      id: newId(), name, wipLimit: null, order: i,
+    columns: ['To Do', 'In Progress', 'Done'].map((n, i) => ({
+      id: newId(), name: n, wipLimit: null, order: i,
     })),
+    order: existing.size,
     createdAt: serverTimestamp(),
   });
+  return ref.id;
 }
 
-export async function updateProject(fields) {
-  await updateDoc(userRef(), fields);
-}
-
-export function subscribeUser(cb) {
-  return onSnapshot(userRef(), s => cb(s.exists() ? s.data() : null));
+export async function updateBoard(id, fields) {
+  await updateDoc(boardRef(id), fields);
 }
 
 export function subscribeIssues(cb) {
@@ -53,11 +57,11 @@ export async function createIssue(data) {
   const ref = doc(issuesCol());
   let key;
   await runTransaction(db, async tx => {
-    const snap = await tx.get(userRef());
-    const u = snap.data();
-    const n = (u.issueCounter || 0) + 1;
-    key = `${u.keyPrefix}-${n}`;
-    tx.update(userRef(), { issueCounter: n });
+    const snap = await tx.get(boardRef(boardId));
+    const b = snap.data();
+    const n = (b.issueCounter || 0) + 1;
+    key = `${b.keyPrefix}-${n}`;
+    tx.update(boardRef(boardId), { issueCounter: n });
     tx.set(ref, { ...data, key, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
   });
   return key;
