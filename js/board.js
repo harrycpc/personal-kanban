@@ -25,7 +25,7 @@ function boardHeader(paintBody) {
     },
   }, `Group by: ${state.groupByEpic ? 'Epic' : 'None'}`);
   return el('div', { class: 'board-header' },
-    el('div', { class: 'board-title' }, `${state.userDoc.projectName} board`),
+    el('div', { class: 'board-title' }, `${state.board.name} board`),
     el('div', { class: 'board-controls' },
       ...filterBar(paintBody),
       el('div', { class: 'spacer' }),

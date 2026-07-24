@@ -75,7 +75,7 @@ export function openColumnSettings() {
     }
     try {
       if (updates.length) await store.batchUpdateIssues(updates);
-      await store.updateProject({ columns: finalCols });
+      await store.updateBoard(state.activeBoardId, { columns: finalCols });
       overlay.remove();
       toast('Board columns updated');
     } catch (e) { toast('Save failed: ' + e.message); }
