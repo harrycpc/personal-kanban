@@ -1,6 +1,8 @@
 export const state = {
   user: null,
-  userDoc: null,
+  boards: [],
+  activeBoardId: null,
+  board: null,
   issues: [],
   epics: [],
   route: 'board',
@@ -13,8 +15,12 @@ let renderFn = () => {};
 export function setRenderer(fn) { renderFn = fn; }
 export function rerender() { renderFn(); }
 
+export function boardsSorted() {
+  return [...state.boards].sort((a, b) => a.order - b.order);
+}
+
 export function columnsSorted() {
-  return [...(state.userDoc?.columns || [])].sort((a, b) => a.order - b.order);
+  return [...(state.board?.columns || [])].sort((a, b) => a.order - b.order);
 }
 
 export function isDoneStatus(status) {
