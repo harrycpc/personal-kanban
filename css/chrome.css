@@ -24,3 +24,10 @@
 .nav-item.active{background:var(--blue-light);color:var(--blue);font-weight:500}
 .nav-icon{width:16px;text-align:center}
 #view{flex:1;overflow:auto;padding:24px}
+.board-list{margin-bottom:16px}
+.board-list h3{font-size:11px;text-transform:uppercase;color:var(--text-faint);padding:0 8px;margin-bottom:6px}
+.board-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px}
+.board-item:hover{background:#EBECF0}
+.board-item.active{background:var(--blue-light);color:var(--blue);font-weight:500}
+.board-item-icon{width:20px;height:20px;border-radius:4px;background:var(--text-faint);color:#fff;font-size:11px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0}
