@@ -3,8 +3,10 @@ import { el, openModal, toast } from './ui.js';
 import * as store from './store.js';
 import { suggestKeyPrefix } from './logic.js';
 
-export function boardDetailsDialog({ title, submitLabel, defaultName = 'My Board' }) {
+export function boardDetailsDialog({ title, submitLabel, defaultName = 'My Board', cancellable = false }) {
   return new Promise(resolve => {
+    let settled = false;
+    const done = v => { if (settled) return; settled = true; resolve(v); };
     let prefixTouched = false;
     const name = el('input', { value: defaultName });
     const prefix = el('input', { value: suggestKeyPrefix(defaultName), maxlength: '5' });
@@ -20,8 +22,9 @@ export function boardDetailsDialog({ title, submitLabel, defaultName = 'My Board
         return;
       }
       overlay.remove();
-      resolve({ name: n, keyPrefix: p });
+      done({ name: n, keyPrefix: p });
     };
+    const cancel = () => { overlay.remove(); done(null); };
     const overlay = openModal(el('div', { class: 'modal' },
       el('h2', {}, title),
       el('div', { class: 'field' }, el('label', {}, 'Board name'), name),
@@ -29,15 +32,19 @@ export function boardDetailsDialog({ title, submitLabel, defaultName = 'My Board
         el('label', {}, 'Key — used for issue IDs like HG-1. Permanent.'), prefix),
       errEl,
       el('div', { class: 'actions' },
+        cancellable && el('button', { class: 'btn', onclick: cancel }, 'Cancel'),
         el('button', { class: 'btn btn-primary', onclick: submit }, submitLabel)),
-    ), { dismissable: false });
+    ), { dismissable: cancellable });
+    if (cancellable) overlay.addEventListener('click', e => { if (e.target === overlay) done(null); });
   });
 }
 
 async function createBoardFlow(onCreated) {
-  const { name, keyPrefix } = await boardDetailsDialog({
-    title: 'Create board', submitLabel: 'Create board', defaultName: 'New board',
+  const result = await boardDetailsDialog({
+    title: 'Create board', submitLabel: 'Create board', defaultName: 'New board', cancellable: true,
   });
+  if (!result) return;
+  const { name, keyPrefix } = result;
   try {
     const id = await store.createBoard(name, keyPrefix);
     onCreated(id);
