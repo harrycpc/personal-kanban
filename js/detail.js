@@ -233,8 +233,8 @@ function subtasksSection(issue, save) {
     const done = subs.filter(s => s.done).length;
     header.replaceChildren(
       el('h4', {}, subs.length ? `Subtasks (${done}/${subs.length})` : 'Subtasks'),
-      subs.length > 0 && el('div', { class: 'progress' },
-        el('div', { style: `width:${Math.round(100 * done / subs.length)}%` })));
+      ...(subs.length > 0 ? [el('div', { class: 'progress' },
+        el('div', { style: `width:${Math.round(100 * done / subs.length)}%` }))] : []));
     listEl.replaceChildren(...subs.map(subtaskRow));
   }
 
