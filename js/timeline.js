@@ -71,7 +71,9 @@ function timelineBody() {
 
   const ticks = buildTicks(winStart, winEnd, state.timelineZoom);
   const ruler = el('div', { class: 'timeline-ruler', style: `width:${totalPx}px` },
-    ticks.map(t => el('div', { class: 'timeline-tick', style: `left:${xOf(t.date)}px` }, el('span', {}, t.label))));
+    ticks.map(t => el('div', {
+      class: 'timeline-tick', style: `left:${Math.max(0, xOf(t.date))}px`,
+    }, el('span', {}, t.label))));
 
   const rows = [];
   groups.forEach(g => {
@@ -167,9 +169,12 @@ function unscheduledTray(issues) {
         class: 'timeline-unscheduled-row',
         onclick: () => openDetailModal(i.id),
       }, el('span', { class: 'key' }, i.key), el('span', {}, i.title))));
-  const toggle = el('button', { class: 'timeline-unscheduled-toggle' },
-    `${issues.length} unscheduled issue${issues.length === 1 ? '' : 's'} ▾`);
-  toggle.addEventListener('click', () => { list.hidden = !list.hidden; });
+  const label = open => `${issues.length} unscheduled issue${issues.length === 1 ? '' : 's'} ${open ? '▴' : '▾'}`;
+  const toggle = el('button', { class: 'timeline-unscheduled-toggle' }, label(false));
+  toggle.addEventListener('click', () => {
+    list.hidden = !list.hidden;
+    toggle.textContent = label(!list.hidden);
+  });
   return el('div', { class: 'timeline-unscheduled' }, toggle, list);
 }
 
