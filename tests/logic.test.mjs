@@ -4,6 +4,7 @@ import {
   newId, suggestKeyPrefix, todayLocalISO, isOverdue,
   appendActivity, allLabels, formatDue, EPIC_COLORS, PRIORITIES, TYPES, matchesFilters,
   blockedByIssues, blockingIssues,
+  daysBetween, addDaysISO, issueDateRange, rollupRange, epicDateRange,
 } from '../js/logic.js';
 
 test('newId returns distinct non-empty strings', () => {
@@ -125,4 +126,73 @@ test('blockingIssues: finds issues whose blockedBy references this issue', () =>
     { id: 'c', blockedBy: [] },
   ];
   assert.deepEqual(blockingIssues({ id: 'x' }, all).map(i => i.id), ['a', 'b']);
+});
+
+test('daysBetween counts whole days, including across months', () => {
+  assert.equal(daysBetween('2026-07-20', '2026-07-27'), 7);
+  assert.equal(daysBetween('2026-07-27', '2026-07-20'), -7);
+  assert.equal(daysBetween('2026-07-31', '2026-08-01'), 1);
+  assert.equal(daysBetween('2026-01-01', '2026-01-01'), 0);
+});
+
+test('addDaysISO adds/subtracts days and rolls over month/year boundaries', () => {
+  assert.equal(addDaysISO('2026-07-27', 7), '2026-08-03');
+  assert.equal(addDaysISO('2026-07-27', -14), '2026-07-13');
+  assert.equal(addDaysISO('2026-12-28', 7), '2027-01-04');
+});
+
+test('issueDateRange: both dates set uses them verbatim', () => {
+  assert.deepEqual(
+    issueDateRange({ startDate: '2026-07-20', dueDate: '2026-08-03' }),
+    { start: '2026-07-20', end: '2026-08-03' },
+  );
+});
+
+test('issueDateRange: only dueDate collapses to a single-day range', () => {
+  assert.deepEqual(issueDateRange({ dueDate: '2026-08-03' }), { start: '2026-08-03', end: '2026-08-03' });
+});
+
+test('issueDateRange: only startDate collapses to a single-day range', () => {
+  assert.deepEqual(issueDateRange({ startDate: '2026-07-20' }), { start: '2026-07-20', end: '2026-07-20' });
+});
+
+test('issueDateRange: no dates returns null', () => {
+  assert.equal(issueDateRange({}), null);
+  assert.equal(issueDateRange({ startDate: '', dueDate: '' }), null);
+});
+
+test('rollupRange: spans the min start and max end, ignoring nulls', () => {
+  assert.deepEqual(
+    rollupRange([
+      { start: '2026-08-01', end: '2026-08-10' },
+      null,
+      { start: '2026-07-20', end: '2026-08-05' },
+    ]),
+    { start: '2026-07-20', end: '2026-08-10' },
+  );
+});
+
+test('rollupRange: empty or all-null input returns null', () => {
+  assert.equal(rollupRange([]), null);
+  assert.equal(rollupRange([null, null]), null);
+});
+
+test('epicDateRange: explicit epic dates win over child rollup', () => {
+  const epic = { id: 'e1', startDate: '2026-01-01', dueDate: '2026-12-31' };
+  const issues = [{ epicId: 'e1', startDate: '2026-07-20', dueDate: '2026-08-03' }];
+  assert.deepEqual(epicDateRange(epic, issues), { start: '2026-01-01', end: '2026-12-31' });
+});
+
+test('epicDateRange: falls back to rollup of child issue dates when unset', () => {
+  const epic = { id: 'e1' };
+  const issues = [
+    { epicId: 'e1', dueDate: '2026-08-10' },
+    { epicId: 'e1', startDate: '2026-07-20', dueDate: '2026-07-27' },
+    { epicId: 'e2', startDate: '2020-01-01', dueDate: '2020-01-02' },
+  ];
+  assert.deepEqual(epicDateRange(epic, issues), { start: '2026-07-20', end: '2026-08-10' });
+});
+
+test('epicDateRange: no epic dates and no dated children returns null', () => {
+  assert.equal(epicDateRange({ id: 'e1' }, [{ epicId: 'e1' }]), null);
 });

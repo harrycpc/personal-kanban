@@ -7,6 +7,7 @@ import { el, openModal, toast } from './ui.js';
 import { renderBoard } from './board.js';
 import { openCreateModal } from './detail.js';
 import { renderBacklog } from './backlog.js';
+import { renderTimeline } from './timeline.js';
 import { renderBoardSwitcher, boardDetailsDialog } from './boards.js';
 
 const signinEl = document.getElementById('signin');
@@ -18,7 +19,8 @@ initSignin();
 wireSignout();
 
 function applyRoute() {
-  state.route = location.hash.startsWith('#/backlog') ? 'backlog' : 'board';
+  state.route = location.hash.startsWith('#/backlog') ? 'backlog'
+    : location.hash.startsWith('#/timeline') ? 'timeline' : 'board';
   document.querySelectorAll('.nav-item').forEach(a =>
     a.classList.toggle('active', a.dataset.route === state.route));
   rerender();
@@ -80,6 +82,7 @@ function renderApp() {
 function renderView() {
   const view = document.getElementById('view');
   if (state.route === 'backlog') renderBacklog(view);
+  else if (state.route === 'timeline') renderTimeline(view);
   else renderBoard(view);
 }
 

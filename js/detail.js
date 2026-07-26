@@ -39,6 +39,7 @@ export function openCreateModal(defaults = {}) {
     defaults.status || 'backlog');
   const prioSel = selectEl(PRIORITIES, 'medium');
   const points = el('input', { type: 'number', min: '0', placeholder: 'None' });
+  const start = el('input', { type: 'date' });
   const due = el('input', { type: 'date' });
   const epicSel = selectEl([['', 'No epic'], ...state.epics.map(e => [e.id, e.name])],
     defaults.epicId || '');
@@ -53,7 +54,7 @@ export function openCreateModal(defaults = {}) {
         type: typeSel.value, title: t, description: desc.value, status,
         priority: prioSel.value,
         storyPoints: points.value === '' ? null : Number(points.value),
-        dueDate: due.value, epicId: epicSel.value || null, labels: labels.get(),
+        startDate: start.value, dueDate: due.value, epicId: epicSel.value || null, labels: labels.get(),
         order: issuesByStatus(status).length,
         subtasks: [], comments: [], links: [], activity: [],
       });
@@ -70,6 +71,7 @@ export function openCreateModal(defaults = {}) {
     fieldWrap('Status', statusSel),
     fieldWrap('Priority', prioSel),
     fieldWrap('Story points', points),
+    fieldWrap('Start date', start),
     fieldWrap('Due date', due),
     fieldWrap('Epic', epicSel),
     fieldWrap('Labels', labels.node),
@@ -169,6 +171,9 @@ export function openDetailModal(issueId) {
     const v = epicSel.value || null;
     save({ epicId: v }, v ? `Epic set to ${findEpic(v)?.name ?? v}` : 'Epic removed');
   });
+  const start = el('input', { type: 'date', value: issue.startDate || '' });
+  start.addEventListener('change', () =>
+    save({ startDate: start.value }, start.value ? `Start date set to ${start.value}` : 'Start date cleared'));
   const due = el('input', { type: 'date', value: issue.dueDate || '' });
   due.addEventListener('change', () =>
     save({ dueDate: due.value }, due.value ? `Due date set to ${due.value}` : 'Due date cleared'));
@@ -180,6 +185,7 @@ export function openDetailModal(issueId) {
     fieldWrap('Story points', points),
     fieldWrap('Labels', labels.node),
     fieldWrap('Epic', epicSel),
+    fieldWrap('Start date', start),
     fieldWrap('Due date', due),
     el('div', { class: 'field' }, el('label', {}, 'Created'),
       el('span', { class: 'static' }, fmtTs(issue.createdAt))),

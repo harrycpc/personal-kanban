@@ -1,0 +1,36 @@
+.zoom-group{display:flex;gap:4px}
+.timeline-empty{padding:40px;text-align:center;color:var(--text-faint);border:1px solid var(--line);border-radius:var(--radius)}
+.timeline-scroll{overflow:auto;border:1px solid var(--line);border-radius:var(--radius);background:#fff;max-height:calc(100vh - 220px)}
+.timeline-header-row{display:flex;position:sticky;top:0;z-index:3;background:#fff;border-bottom:1px solid var(--line)}
+.timeline-corner{position:sticky;left:0;z-index:4;background:#fff;border-right:1px solid var(--line)}
+.timeline-ruler{position:relative;height:32px;flex-shrink:0}
+.timeline-tick{position:absolute;top:0;bottom:0;border-left:1px solid var(--line);padding-left:6px;display:flex;align-items:center}
+.timeline-tick span{font-size:11px;color:var(--text-faint);white-space:nowrap}
+.timeline-rows{display:flex;flex-direction:column}
+.timeline-row{display:flex;align-items:center;min-height:36px;border-bottom:1px solid var(--line)}
+.timeline-row-label{position:sticky;left:0;z-index:2;background:#fff;width:280px;flex-shrink:0;
+  display:flex;align-items:center;gap:6px;padding:0 10px;border-right:1px solid var(--line);
+  overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;font-size:13px}
+.timeline-epic-label{font-weight:600}
+.timeline-epic-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.timeline-issue-label{padding-left:26px}
+.timeline-issue-label .key{color:var(--text-faint);flex-shrink:0}
+.timeline-issue-label .key.done{text-decoration:line-through}
+.timeline-issue-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.timeline-progress-text{font-size:11px;color:var(--text-faint);font-weight:500;flex-shrink:0}
+.timeline-row-track{position:relative;flex-shrink:0;height:100%;min-height:36px}
+.timeline-today-line{position:absolute;top:0;bottom:0;width:2px;background:var(--red);opacity:.55;z-index:1}
+.timeline-bar{position:absolute;top:8px;bottom:8px;border-radius:4px;cursor:pointer}
+.timeline-epic-bar{top:9px;bottom:9px;border:2px solid;border-radius:6px;background:#fff;overflow:hidden}
+.timeline-progress-fill{height:100%}
+.timeline-issue-bar{opacity:.85}
+.timeline-issue-bar.done{opacity:1}
+.timeline-issue-bar.overdue{outline:2px solid var(--red);outline-offset:1px}
+.timeline-group-row .timeline-row-label{font-weight:600;color:var(--text-subtle);cursor:default}
+.timeline-unscheduled{margin-top:12px;border:1px solid var(--line);border-radius:var(--radius);background:#fff}
+.timeline-unscheduled-toggle{width:100%;text-align:left;background:#FAFBFC;border:none;padding:8px 12px;font-size:13px;color:var(--text-subtle);font-weight:500;border-radius:var(--radius)}
+.timeline-unscheduled-toggle:hover{background:#EBECF0}
+.timeline-unscheduled-list{border-top:1px solid var(--line)}
+.timeline-unscheduled-row{display:flex;gap:10px;padding:6px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--line)}
+.timeline-unscheduled-row:last-child{border-bottom:none}
+.timeline-unscheduled-row:hover{background:#F4F5F7}

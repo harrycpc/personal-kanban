@@ -70,3 +70,38 @@ export function blockedByIssues(issue, allIssues) {
 export function blockingIssues(issue, allIssues) {
   return allIssues.filter(i => (i.blockedBy || []).includes(issue.id));
 }
+
+function parseISO(iso) {
+  const [y, m, d] = iso.split('-').map(Number);
+  return Date.UTC(y, m - 1, d);
+}
+
+export function daysBetween(aIso, bIso) {
+  return Math.round((parseISO(bIso) - parseISO(aIso)) / 86400000);
+}
+
+export function addDaysISO(iso, n) {
+  const dt = new Date(parseISO(iso) + n * 86400000);
+  return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, '0')}-${String(dt.getUTCDate()).padStart(2, '0')}`;
+}
+
+export function issueDateRange(issue) {
+  if (issue.startDate && issue.dueDate) return { start: issue.startDate, end: issue.dueDate };
+  if (issue.dueDate) return { start: issue.dueDate, end: issue.dueDate };
+  if (issue.startDate) return { start: issue.startDate, end: issue.startDate };
+  return null;
+}
+
+export function rollupRange(ranges) {
+  const valid = ranges.filter(Boolean);
+  if (!valid.length) return null;
+  return {
+    start: valid.map(r => r.start).reduce((a, b) => (a < b ? a : b)),
+    end: valid.map(r => r.end).reduce((a, b) => (a > b ? a : b)),
+  };
+}
+
+export function epicDateRange(epic, issues) {
+  if (epic.startDate && epic.dueDate) return { start: epic.startDate, end: epic.dueDate };
+  return rollupRange(issues.filter(i => i.epicId === epic.id).map(issueDateRange));
+}

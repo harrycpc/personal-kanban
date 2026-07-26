@@ -93,9 +93,11 @@ function epicPanel() {
     el('button', { class: 'col-add', onclick: () => openEpicDialog(null) }, '+ Create epic'));
 }
 
-function openEpicDialog(epic) {
+export function openEpicDialog(epic) {
   let color = epic?.color || EPIC_COLORS[0];
   const name = el('input', { value: epic?.name || '', placeholder: 'Epic name' });
+  const start = el('input', { type: 'date', value: epic?.startDate || '' });
+  const due = el('input', { type: 'date', value: epic?.dueDate || '' });
   const swatches = el('div', { class: 'epic-swatches' }, EPIC_COLORS.map(c => {
     const sw = el('button', {
       class: 'epic-swatch' + (c === color ? ' selected' : ''),
@@ -114,8 +116,9 @@ function openEpicDialog(epic) {
       const n = name.value.trim();
       if (!n) { toast('Epic name is required'); return; }
       try {
-        if (epic) await store.updateEpic(epic.id, { name: n, color });
-        else await store.createEpic({ name: n, color });
+        const fields = { name: n, color, startDate: start.value, dueDate: due.value };
+        if (epic) await store.updateEpic(epic.id, fields);
+        else await store.createEpic(fields);
         overlay.remove();
       } catch (e) { toast('Save failed: ' + e.message); }
     },
@@ -140,6 +143,8 @@ function openEpicDialog(epic) {
     el('h2', {}, epic ? 'Edit epic' : 'Create epic'),
     el('div', { class: 'field' }, el('label', {}, 'Name'), name),
     el('div', { class: 'field' }, el('label', {}, 'Color'), swatches),
+    el('div', { class: 'field' }, el('label', {}, 'Start date (optional — used by Timeline view)'), start),
+    el('div', { class: 'field' }, el('label', {}, 'Due date (optional — used by Timeline view)'), due),
     el('div', { class: 'actions' },
       deleteBtn,
       el('button', { class: 'btn', onclick: () => overlay.remove() }, 'Cancel'),
