@@ -105,6 +105,7 @@ function inlineCreate(col) {
           type: 'task', title, description: '', status: col.id,
           priority: 'medium', storyPoints: null, dueDate: '', epicId: null, labels: [],
           order: issuesByStatus(col.id).length,
+          completedAt: isDoneStatus(col.id) ? Date.now() : null,
           subtasks: [], comments: [], links: [], activity: [],
         });
       } catch (err) { toast('Could not create issue: ' + err.message); }
@@ -179,6 +180,7 @@ async function handleDrop(evt) {
     const src = state.issues.find(i => i.id === movedId);
     if (moved && src) {
       moved.activity = appendActivity(src.activity, `Moved to ${statusName(moved.status)}`);
+      moved.completedAt = isDoneStatus(moved.status) ? Date.now() : null;
     }
   }
   try { await store.batchUpdateIssues(updates); }

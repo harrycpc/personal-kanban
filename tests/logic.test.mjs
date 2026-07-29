@@ -5,6 +5,7 @@ import {
   appendActivity, allLabels, formatDue, EPIC_COLORS, PRIORITIES, TYPES, matchesFilters,
   blockedByIssues, blockingIssues,
   daysBetween, addDaysISO, issueDateRange, rollupRange, epicDateRange,
+  completionDate, journalDays, journalStats, toCSV,
 } from '../js/logic.js';
 
 test('newId returns distinct non-empty strings', () => {
@@ -195,4 +196,113 @@ test('epicDateRange: falls back to rollup of child issue dates when unset', () =
 
 test('epicDateRange: no epic dates and no dated children returns null', () => {
   assert.equal(epicDateRange({ id: 'e1' }, [{ epicId: 'e1' }]), null);
+});
+
+// Local-time timestamp, so these assertions hold in any timezone.
+const at = (y, m, d, h = 10) => new Date(y, m - 1, d, h).getTime();
+
+test('completionDate: uses completedAt when the issue sits in the done column', () => {
+  const issue = { status: 'done', completedAt: at(2026, 8, 3) };
+  assert.equal(completionDate(issue, 'done', 'Done'), '2026-08-03');
+});
+
+test('completionDate: null unless the issue is currently done', () => {
+  assert.equal(completionDate({ status: 'doing', completedAt: at(2026, 8, 3) }, 'done', 'Done'), null);
+  assert.equal(completionDate({ status: 'done', completedAt: at(2026, 8, 3) }, '', 'Done'), null);
+});
+
+test('completionDate: falls back to the last matching activity entry', () => {
+  const issue = {
+    status: 'done',
+    activity: [
+      { ts: at(2026, 7, 1), text: 'Moved to Done' },
+      { ts: at(2026, 7, 2), text: 'Moved to In Progress' },
+      { ts: at(2026, 8, 3), text: 'Moved to Done' },
+    ],
+  };
+  assert.equal(completionDate(issue, 'done', 'Done'), '2026-08-03');
+});
+
+test('completionDate: fallback finds nothing when the done column was renamed', () => {
+  const issue = { status: 'done', activity: [{ ts: at(2026, 8, 3), text: 'Moved to Done' }] };
+  assert.equal(completionDate(issue, 'done', 'Shipped'), null);
+  assert.equal(completionDate({ status: 'done' }, 'done', 'Done'), null);
+});
+
+const doneIssue = (key, day, points, epicId) => ({
+  key, status: 'done', completedAt: at(2026, 8, day), storyPoints: points, epicId,
+});
+
+test('journalDays: buckets completions by day, newest first, filling gaps', () => {
+  const issues = [doneIssue('CI-2', 3, 3, 'e1'), doneIssue('CI-9', 5, 2, 'e2')];
+  const days = journalDays(issues, {}, 'done', 'Done', '2026-08-05');
+  assert.deepEqual(days.map(d => d.date), ['2026-08-05', '2026-08-04', '2026-08-03']);
+  assert.deepEqual(days[0].issues.map(i => i.key), ['CI-9']);
+  assert.deepEqual(days[1].issues, []);
+  assert.deepEqual(days[2].issues.map(i => i.key), ['CI-2']);
+});
+
+test('journalDays: aggregates points and distinct epics, sorts keys numerically', () => {
+  const issues = [doneIssue('CI-10', 3, 5, 'e1'), doneIssue('CI-2', 3, 3, 'e1'), doneIssue('CI-4', 3, null, 'e2')];
+  const [day] = journalDays(issues, {}, 'done', 'Done', '2026-08-03');
+  assert.deepEqual(day.issues.map(i => i.key), ['CI-2', 'CI-4', 'CI-10']);
+  assert.equal(day.points, 8);
+  assert.deepEqual(day.epicIds, ['e1', 'e2']);
+});
+
+test('journalDays: a note alone starts the log and attaches to its day', () => {
+  const days = journalDays([], { '2026-08-03': 'read the RHCSA notes' }, 'done', 'Done', '2026-08-04');
+  assert.deepEqual(days.map(d => d.date), ['2026-08-04', '2026-08-03']);
+  assert.equal(days[1].note, 'read the RHCSA notes');
+  assert.equal(days[0].note, '');
+});
+
+test('journalDays: ignores unfinished issues and empty notes, returns [] when nothing recorded', () => {
+  assert.deepEqual(journalDays([{ key: 'CI-1', status: 'doing' }], { '2026-08-03': '' }, 'done', 'Done', '2026-08-05'), []);
+  assert.deepEqual(journalDays([], {}, 'done', 'Done', '2026-08-05'), []);
+});
+
+test('journalDays: a completion later than today still extends the range', () => {
+  const days = journalDays([doneIssue('CI-2', 6, 1, 'e1')], {}, 'done', 'Done', '2026-08-05');
+  assert.equal(days[0].date, '2026-08-06');
+});
+
+test('journalStats: counts active days, tickets, points and the start date', () => {
+  const issues = [doneIssue('CI-2', 3, 3, 'e1'), doneIssue('CI-9', 5, 2, 'e2')];
+  const days = journalDays(issues, { '2026-08-04': 'stuck on IAM' }, 'done', 'Done', '2026-08-05');
+  const s = journalStats(days, '2026-08-05');
+  assert.equal(s.activeDays, 3);
+  assert.equal(s.tickets, 2);
+  assert.equal(s.points, 5);
+  assert.equal(s.since, '2026-08-03');
+});
+
+test('journalStats: streak runs back from today', () => {
+  const issues = [doneIssue('CI-2', 4, 1, 'e1'), doneIssue('CI-3', 5, 1, 'e1')];
+  const days = journalDays(issues, {}, 'done', 'Done', '2026-08-05');
+  assert.equal(journalStats(days, '2026-08-05').streak, 2);
+});
+
+test('journalStats: an unworked today is forgiven, an unworked yesterday is not', () => {
+  const issues = [doneIssue('CI-2', 4, 1, 'e1')];
+  const days = journalDays(issues, {}, 'done', 'Done', '2026-08-05');
+  assert.equal(journalStats(days, '2026-08-05').streak, 1);
+  const older = journalDays(issues, {}, 'done', 'Done', '2026-08-06');
+  assert.equal(journalStats(older, '2026-08-06').streak, 0);
+});
+
+test('journalStats: empty log reports zeroes and no start date', () => {
+  assert.deepEqual(journalStats([], '2026-08-05'),
+    { activeDays: 0, streak: 0, tickets: 0, points: 0, since: null });
+});
+
+test('toCSV: quotes only fields containing a comma, quote or newline', () => {
+  assert.equal(toCSV([['a', 'b'], ['1', '2']]), 'a,b\n1,2');
+  assert.equal(toCSV([['x,y']]), '"x,y"');
+  assert.equal(toCSV([['say "hi"']]), '"say ""hi"""');
+  assert.equal(toCSV([['two\nlines']]), '"two\nlines"');
+});
+
+test('toCSV: renders null and undefined as empty fields', () => {
+  assert.equal(toCSV([[null, undefined, 0]]), ',,0');
 });

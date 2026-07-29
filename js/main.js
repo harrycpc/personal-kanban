@@ -8,6 +8,7 @@ import { renderBoard } from './board.js';
 import { openCreateModal } from './detail.js';
 import { renderBacklog } from './backlog.js';
 import { renderTimeline } from './timeline.js';
+import { renderJournal } from './journal.js';
 import { renderBoardSwitcher, boardDetailsDialog } from './boards.js';
 
 const signinEl = document.getElementById('signin');
@@ -20,7 +21,8 @@ wireSignout();
 
 function applyRoute() {
   state.route = location.hash.startsWith('#/backlog') ? 'backlog'
-    : location.hash.startsWith('#/timeline') ? 'timeline' : 'board';
+    : location.hash.startsWith('#/timeline') ? 'timeline'
+    : location.hash.startsWith('#/journal') ? 'journal' : 'board';
   document.querySelectorAll('.nav-item').forEach(a =>
     a.classList.toggle('active', a.dataset.route === state.route));
   rerender();
@@ -83,6 +85,7 @@ function renderView() {
   const view = document.getElementById('view');
   if (state.route === 'backlog') renderBacklog(view);
   else if (state.route === 'timeline') renderTimeline(view);
+  else if (state.route === 'journal') renderJournal(view);
   else renderBoard(view);
 }
 
@@ -92,6 +95,7 @@ function switchBoard(boardId) {
   state.board = null;
   state.issues = [];
   state.epics = [];
+  state.journal = {};
   state.filters = { text: '', type: '', epicId: '', label: '', overdue: false };
   state.collapsedLanes = new Set();
   localStorage.setItem('pk-active-board', boardId);
@@ -100,6 +104,7 @@ function switchBoard(boardId) {
     store.subscribeBoard(boardId, data => { state.board = data; rerender(); }),
     store.subscribeIssues(list => { state.issues = list; rerender(); }),
     store.subscribeEpics(list => { state.epics = list; rerender(); }),
+    store.subscribeJournal(notes => { state.journal = notes; rerender(); }),
   ];
 }
 

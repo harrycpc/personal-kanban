@@ -16,6 +16,8 @@ const issuesCol = () => collection(db, 'users', uid, 'boards', boardId, 'issues'
 const issueRef = id => doc(db, 'users', uid, 'boards', boardId, 'issues', id);
 const epicsCol = () => collection(db, 'users', uid, 'boards', boardId, 'epics');
 const epicRef = id => doc(db, 'users', uid, 'boards', boardId, 'epics', id);
+const journalCol = () => collection(db, 'users', uid, 'boards', boardId, 'journal');
+const journalRef = date => doc(db, 'users', uid, 'boards', boardId, 'journal', date);
 
 export function subscribeBoards(cb) {
   return onSnapshot(boardsCol(), s => cb(s.docs.map(d => ({ id: d.id, ...d.data() }))));
@@ -51,6 +53,21 @@ export function subscribeIssues(cb) {
 
 export function subscribeEpics(cb) {
   return onSnapshot(epicsCol(), s => cb(s.docs.map(d => ({ id: d.id, ...d.data() }))));
+}
+
+// Doc id is the YYYY-MM-DD date, so a note write is idempotent and needs no
+// read-modify-write. Clearing a note deletes the doc rather than storing ''.
+export function subscribeJournal(cb) {
+  return onSnapshot(journalCol(), s => {
+    const notes = {};
+    s.docs.forEach(d => { notes[d.id] = d.data().note || ''; });
+    cb(notes);
+  });
+}
+
+export async function setJournalNote(date, note) {
+  if (!note) await deleteDoc(journalRef(date));
+  else await setDoc(journalRef(date), { note, updatedAt: serverTimestamp() });
 }
 
 export async function createIssue(data) {

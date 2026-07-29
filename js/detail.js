@@ -1,4 +1,4 @@
-import { state, columnsSorted, issuesByStatus, statusName, findEpic } from './state.js';
+import { state, columnsSorted, issuesByStatus, statusName, findEpic, isDoneStatus } from './state.js';
 import {
   el, openModal, toast, selectEl, iconEl, typeIconHtml, priorityIconHtml, confirmDialog,
 } from './ui.js';
@@ -56,6 +56,7 @@ export function openCreateModal(defaults = {}) {
         storyPoints: points.value === '' ? null : Number(points.value),
         startDate: start.value, dueDate: due.value, epicId: epicSel.value || null, labels: labels.get(),
         order: issuesByStatus(status).length,
+        completedAt: isDoneStatus(status) ? Date.now() : null,
         subtasks: [], comments: [], links: [], activity: [],
       });
       toast(`${key} created`);
@@ -151,7 +152,8 @@ export function openDetailModal(issueId) {
   statusSel.addEventListener('change', () => {
     const status = statusSel.value;
     const order = state.issues.filter(i => i.status === status && i.id !== issue.id).length;
-    save({ status, order }, `Moved to ${statusName(status)}`);
+    const completedAt = isDoneStatus(status) ? Date.now() : null;
+    save({ status, order, completedAt }, `Moved to ${statusName(status)}`);
   });
   const typeSel = selectEl(TYPES, issue.type);
   typeSel.addEventListener('change', () =>

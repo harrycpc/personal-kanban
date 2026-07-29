@@ -5,12 +5,14 @@ export const state = {
   board: null,
   issues: [],
   epics: [],
+  journal: {},
   route: 'board',
   filters: { text: '', type: '', epicId: '', label: '', overdue: false },
   groupByEpic: localStorage.getItem('pk-groupby') === 'epic',
   collapsedLanes: new Set(),
   timelineCollapsed: new Set(),
   timelineZoom: localStorage.getItem('pk-timeline-zoom') || 'weeks',
+  journalShowEmpty: localStorage.getItem('pk-journal-empty') !== 'off',
 };
 
 let renderFn = () => {};
